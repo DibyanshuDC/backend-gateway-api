@@ -1,4 +1,4 @@
-var mongoose = require('mongoose');
+const mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 const options = {
   useMongoClient: true,
@@ -20,7 +20,11 @@ const options = {
 //   () => { /** ready to use. The `mongoose.connect()` promise resolves to undefined. */ },
 //   err => { /** handle initial connection error */ }
 // );
-mongoose.connect(process.env.MONGODB_URI, options);
+mongoose.connect(process.env.MONGODB_URI).then(connection =>{
+  console.log("DB Connected");
+}).catch(e=>{
+  console.log("DB Error", e);
+});
 
 
 module.exports = {mongoose};

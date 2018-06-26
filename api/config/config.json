@@ -4,7 +4,7 @@
     "MONGODB_URI" : "mongodb://localhost:27017/demo",
     "JWT_SECRET" : "dKeSLgHne5",
     "ORACLEDB_USER": "DEV2_OIM",
-    "ORACLEDB_CONNECTIONSTRING":"jdbc:oracle:thin:@oel71.deliverycentric.com:1521:orcl",
+    "ORACLEDB_CONNECTIONSTRING":"oel71.deliverycentric.com:1521:orcl",
     "ORACLEDB_PASSWORD":"Oracle123",
     "ORACLEDB_EXTERNALAUTH": false
   },

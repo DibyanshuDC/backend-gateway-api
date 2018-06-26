@@ -6,9 +6,6 @@ const router = require('express').Router();
 const _ = require('lodash');
 const axios = require('axios');
 const {User} = require('./../../models/User');
-const {authenticate} = require('./../../middleware/authenticate');
-//const {privilaged} = require('./../../middleware/privilaged');
-
 // User Routes
 
 router.route('/login')
@@ -34,64 +31,30 @@ router.route('/login')
                 }).then((response) =>{
                     data = response.data;
                     //Find if user exists if yes generate a token
-
-                    let newuser = new User({
-                        email: data.userName,
-                        usrkey: data.id,
-                        access : data.userType,
-                        tokens:[{
-                            access: 'Coordinator',
-                            token: 'tokens'
-                        }]
+                    User.findByUserName(data.userName).then((user) => {
+                        if(user){
+                            return user.generateAuthToken(data.userType).then((token) => {
+                              let userObject = _.omit(user, 'access', '_id', 'tokens', 'createdAt', 'updatedAt', '__v');
+                                res.status(200).header('x-auth', token).send(userObject);
+                              });
+                        }else{
+                            var newuser = new User({
+                                email: data.userName,
+                                usrkey: data.id,
+                                access : "auth"
+                            });
+                            newuser.save().then(()=>{
+                                return newuser.generateAuthToken(data.userType);
+                            }).then((token)=>{
+                                var userObject = _.omit(newuser, 'access', '_id', 'tokens', 'createdAt', 'updatedAt', '__v');
+                                res.status(201).header('x-auth', token).send(userObject);
+                            }).catch((e)=>{
+                                res.status(400).send();
+                            })
+                        }
+                    }).catch((e) => {
+                        res.status(e).send();
                     });
-                    
-                    console.log("above");
-                    newuser.save(function (e, user) {
-                        console.log("inside save call");
-                        if (e){
-                            console.log(e);
-                            throw e;
-                        } 
-                        console.log(user);
-                        return user;
-                        
-                      });
-                      console.log("after");
-                    
-                    // .then(()=>{
-                    //     console.log("newuser saved");
-                    //     //return newuser.generateAuthToken(newuser.access);
-                    // })
-                    // .catch((e)=>{
-                    //     res.status(400).send();
-                    // })
-
-
-
-                    // User.findByUserName(data.userName).then((user) => {
-                    //     if(user){
-                    //         return user.generateAuthToken(data.userType).then((token) => {
-                    //             var userObject = _.omit(user, 'access', 'tokens', 'createdAt', 'updatedAt', '__v');
-                    //             res.status(200).header('x-auth', token).send(userObject);
-                    //           });
-                    //     }else{
-                    //         var newuser = new User({
-                    //             email: data.userName,
-                    //             usrkey: data.id,
-                    //             access : data.userType
-                    //         });
-                    //         newuser.save().then(()=>{
-                    //             return newuser.generateAuthToken(newuser.access);
-                    //         }).then((token)=>{
-                    //             var userObject = _.omit(newuser, 'access', 'tokens', 'createdAt', 'updatedAt', '__v');
-                    //             res.status(201).header('x-auth', token).send(userObject);
-                    //         }).catch((e)=>{
-                    //             res.status(400).send();
-                    //         })
-                    //     }
-                    // }).catch((e) => {
-                    //     res.status(e).send();
-                    // });
                 });
             }else{
                 throw "Something cracked";
@@ -101,11 +64,6 @@ router.route('/login')
             res.status(406).send(e.response.data);
         });
 
-    });
-
-router.route('/access')
-    .get(authenticate,(req, res) => {
-        res.send(req.user);
     });
 
 

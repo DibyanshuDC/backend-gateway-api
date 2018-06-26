@@ -39,13 +39,13 @@ const UserSchema = new mongoose.Schema({
 UserSchema.methods.toJSON = function () {
 	var user = this;
 	var userObject = user.toObject();
-	return _.pick(userObject, ['_id', 'email', 'usrkey']);
+	return _.pick(userObject, ['email', 'usrkey']);
 }
 
 UserSchema.methods.generateAuthToken = function (accessType) {
   var user = this;
-  var access = accessType;
-  var token = jwt.sign({_id: user._id.toHexString(), access}, process.env.JWT_SECRET, { expiresIn: '6h' }).toString();
+	var access = accessType;
+	var token = jwt.sign({username: user.email, key: user.usrkey, access}, process.env.JWT_SECRET, { expiresIn: '6h' }).toString();
   user.tokens.push({access, token});
   return user.save().then(() => {
     return token;
@@ -56,7 +56,7 @@ UserSchema.statics.findByUserName = function (username) {
 	var User = this;
 	return User.findOne({
     'email': username,
-  },{access: 0, tokens:0, createdAt: 0, updatedAt: 0, __v: 0});
+  },{ createdAt: 0, updatedAt: 0, __v: 0});
 };
 
 UserSchema.statics.findByToken = function (token) {
@@ -65,14 +65,17 @@ UserSchema.statics.findByToken = function (token) {
 	try {
 		decoded = jwt.verify(token, process.env.JWT_SECRET);
 	} catch (e) {
-		console.log(e);
+		if(e.message == "jwt expired"){
+			// Delete the token I will discuss
+		}
 		return Promise.reject(e);
 	}
+
 	return User.findOne({
-    '_id': decoded._id,
-		'access': decoded.access,
+    'email': decoded.username,
+		'access': 'auth',
 		'tokens':{ $elemMatch: {'access' : decoded.access, token}},
-  },{access: 0, tokens:0, createdAt: 0, updatedAt: 0, __v: 0});
+	},{_id:0, password:0, access: 0, tokens:0, createdAt: 0, updatedAt: 0, __v: 0});
 };
 
 

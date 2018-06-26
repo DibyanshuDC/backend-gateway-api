@@ -2,9 +2,9 @@ require('./config/config');
 
 const express = require('express');
 const bodyParser = require('body-parser');
-
+const mongoose = require ('./db/mongoose');
 const port = process.env.PORT;
-
+const oracledb = require('./db/oracle');
 const app = express();
 const routes = require('./routes/index');
 
